@@ -1,8 +1,9 @@
 const zhifubao_password = "000000"; // 这里换成自己的支付宝密码
 const pinmu_password = "000000"; //这里换成自己的手机解锁密码
-const try_count = 273; // 尝试次数，每次尝试约2.2秒，273次尝试约尝试10min
+const try_time = 10; // 尝试时间，以分钟为单位
+const start_time = Date.now() + 3
 
-// 支付函数
+// 支付函数                                                                                                                                                                                                                                                                                                                                                       
 const pay = () =>{
   var a=text("提交订单").findOne().bounds();
   var b=a.centerX();
@@ -50,55 +51,76 @@ const selectTime = (countT,status) =>{
     pay()
   }else{
     countT=countT+1;
-    if(countT>try_count){
-      exit;
+    if((Date.now() - start_time) / 1000 <= try_time * 60){
+      selectTime(countT,false)
+    }
+    else{
+        toast('抢菜失败')
     }
     sleep(100)
-    selectTime(countT,false)
   }
 }
 
 // 结算函数
 const submit_order = (count) => {
-    toast('抢菜第'+count+'次尝试')
     id('button_cart_charge').findOne().click() //结算按钮点击
 
-    sleep(2000)
-    if(textStartsWith('非常抱歉，当前商品运力不足(063)').exists()){
+    // 等待载入中
+    sleep(1000)
+    while(textStartsWith('载入中').exists()){
+      sleep(100)
+    }
+    sleep(400)
+
+    if(textStartsWith('人数较多').exists()){
       back()
       sleep(200)
       count=count+1;
-      if(count>try_count){
-        toast('抢菜失败')
-        exit;
+      if((Date.now() - start_time) / 1000 <= try_time * 60){
+        submit_order(count)
       }
-      submit_order(count)
+      else{
+        toast('抢菜失败')
+      }
+    }else if(textStartsWith('请稍后再试').exists()){
+      back()
+      sleep(200)
+      count=count+1;
+      if((Date.now() - start_time) / 1000 <= try_time * 60){
+        submit_order(count)
+      }
+      else{
+        toast('抢菜失败')
+      }
+    }else if(textStartsWith('非常抱歉，当前商品运力不足(063)').exists()){
+      back()
+      sleep(200)
+      count=count+1;
+      if((Date.now() - start_time) / 1000 <= try_time * 60){
+        submit_order(count)
+      }
+      else{
+        toast('抢菜失败')
+      }
     }else if (textStartsWith('很抱歉，下单失败').exists()) {
       back()
       sleep(200)
       count=count+1;
-      if(count>try_count){
-        toast('抢菜失败')
-        exit;
+      if((Date.now() - start_time) / 1000 <= try_time * 60){
+        submit_order(count)
       }
-      submit_order(count)
-    }else if (textStartsWith('确认').exists() && !textStartsWith('确认订单').exists()) {
-      back()
-      sleep(200)
-      count=count+1;
-      if(count>try_count){
+      else{
         toast('抢菜失败')
-        exit;
       }
-      submit_order(count)
     }else if(textStartsWith('全选').exists()){
       sleep(200)
       count=count+1;
-      if(count>try_count){
-        toast('抢菜失败')
-        exit;
+      if((Date.now() - start_time) / 1000 <= try_time * 60){
+        submit_order(count)
       }
-      submit_order(count)
+      else{
+        toast('抢菜失败')
+      }
     }else{
       if(textStartsWith('放弃机会').exists()){
         toast('跳过加购')
@@ -111,7 +133,6 @@ const submit_order = (count) => {
 // 手机解锁函数
 function unLock() {
   if (!device.isScreenOn()) {
-    toast('try to unlock')
     device.wakeUp();
     sleep(500);
     swipe(500, 2000, 500, 1000, 200);
@@ -122,12 +143,12 @@ function unLock() {
       sleep(100);
     }
   }
-  toast('open')
   sleep(1000);
 }
 
 // 主函数
 const start = () => {
+  toast("start")
   auto()
   // 屏幕解锁
   unLock()
