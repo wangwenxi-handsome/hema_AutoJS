@@ -92,7 +92,7 @@ const submit_order = (count) => {
       else{
         toast('抢菜失败')
       }
-    }else if(textStartsWith('非常抱歉，当前商品运力不足(063)').exists()){
+    }else if(textStartsWith('非常抱歉，当前商品运力不足').exists()){
       back()
       sleep(200)
       count=count+1;
